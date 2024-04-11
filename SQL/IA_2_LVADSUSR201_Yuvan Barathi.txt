@@ -1,0 +1,57 @@
+1. select machine_id from l1_maintenance_records
+where cost > (select avg(cost) from l1_maintenance_records where month(maintenance_date) = 3)
+and  month(maintenance_date) = 3 and year(maintenance_date) = 2024
+group by machine_id;
+
+2. select maintenance_type, count(maintenance_type) as usage_count from l1_maintenance_records
+where month(maintenance_date) = 3 and year(maintenance_date) = 2024
+group by maintenance_type order by usage_count DESC limit 1;
+
+3. select technician_name, count(technician_name) as number_of_tasks, 
+avg(case when month(maintenance_date) = 3 and year(maintenance_date) = 2024 then cost
+else 0 end) as average_cost_per_task from l1_maintenance_records
+where month(maintenance_date) = 3 and year(maintenance_date) = 2024
+group by technician_name 
+order by number_of_tasks, average_cost_per_task DESC LIMIT 1;
+
+4. select product_id, avg(incident_count_pre_update-incident_count_post_update) as avg_incident_reduction
+from l2_updates 
+group by product_id;
+
+5. select update_id from l2_updates
+where user_feedback_score = (select max(user_feedback_score) from l2_updates);
+
+6. select product_id, update_id, sum(incident_count_pre_update-incident_count_post_update) as incident_diff
+from l2_updates
+group by product_id, update_id
+order by incident_diff limit 1;
+
+7. create view comprehensive_patient_record as
+(select patient_name, facility_name, reason_for_visit, outcome from l3_visits
+join l3_facilities using(facility_id)
+join l3_patients using(patient_id)
+join l3_treatments using(visit_id));
+
+select * from comprehensive_patient_record;
+
+8. select facility_name, count(facility_name) as facility_visits from l3_facilities 
+join l3_visits using(facility_id)
+where Month(visit_date) = 3 and year(visit_date) = 2024
+group by facility_name
+order by facility_visits DESC limit 1;
+
+9. select insurance_provider, count(outcome) as Complicated_outcomes from l3_treatments 
+join l3_visits using(visit_id)
+join l3_patients using(patient_id)
+where outcome ='Complicated'
+group by insurance_provider;
+
+10. select category, product_name, quantity from l4_products join l4_sales using(product_id)
+where month(sale_date) = 3 and year(sale_date) = 2024
+group by category, product_name;
+
+11. create view regional_sales_data as
+(select *, (quantity*price) as total_sales from l4_sales join l4_stores using(store_id) 
+join l4_products using(product_id));
+
+12. select * from l4_products left outer join l4_sales using(product_id);
