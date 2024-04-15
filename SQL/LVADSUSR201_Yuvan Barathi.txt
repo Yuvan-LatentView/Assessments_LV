@@ -1,0 +1,105 @@
+-- Lab 1
+-- 1
+select product_category, avg(sales_amount) from products join sales_records using(product_id)
+where datediff(curdate(), sales_date) <=30
+group by product_category;
+
+-- 2
+select product_name, sum(sales_amount) as total_sales_amt, 
+rank() over (order by sum(sales_amount) DESC) as rankings
+from products join sales_records using(product_id) group by product_name order by rankings limit 3;
+
+-- 3
+select customer_name, sum(sales_amount) as total_sales_amt,
+round(percent_rank() over (order by sum(sales_amount)), 2)*100 as percentage,
+rank() over (order by sum(sales_amount) DESC) as rankings
+from customers join sales_records using(customer_id) group by customer_name;
+
+-- 4x
+select customer_name, 
+case
+	when count(customer_id)>=4 and sales_date>date_sub(curdate(), INTERVAL 6 MONTH) then 'Consistent Buyers'
+    else 'Occasional Buyers' end as Buyer_types
+from customers join sales_records using(customer_id) group by customer_name;
+
+-- Lab 2
+-- 5
+select concat(departure_airport,' - ', arrival_airport) as flight_routes, avg(ticket_price) as avg_ticket_price
+from flights join tickets using(flight_id) group by flight_id;
+
+-- 6
+select flight_number, departure_date, count(t.flight_id) from flights f
+join tickets t using(flight_id) where ticket_date>date_sub(curdate(), INTERVAL 1 MONTH)
+group by flight_number, departure_date
+order by sum(ticket_price) DESC;
+
+-- 7
+select passenger_name, sum(ticket_price) as total_amt_spent, frequent_flyer_status from passengers 
+join tickets using(passenger_id) group by passenger_name, frequent_flyer_status 
+order by total_amt_spent DESC limit 5;
+
+-- 8
+select monthname(ticket_date) as Month, count(ticket_id) as tickets_sold from tickets
+group by Month
+order by tickets_sold DESC limit 1;
+
+-- Lab 3
+-- 9
+select player_name, game_genre, avg(timestampdiff(minute, registration_date, play_date)) as avg_playtime from players
+join playerscores using(player_id) join games using(game_id) group by player_name, game_genre
+order by avg_playtime desc;
+
+-- 10
+select game_name, count(player_id) as player_count from games join playerscores using(game_id)
+group by game_name
+order by player_count DESC limit 3;
+
+-- 11
+select game_name, avg(score) as average_score, max(score) as highest_score, count(score_id) as player_count 
+from playerscores join games using(game_id) group by game_name;
+
+-- 12
+select player_name, registration_date, play_date from players join playerscores using(player_id)
+where datediff(curdate(), play_date) >=30;
+
+-- Lab 4
+-- 13
+select doctor_name, sum(cost) as total_treatment_cost from doctors join treatments using(doctor_id)
+group by doctor_name order by total_treatment_cost desc;
+
+-- 14
+select treatment_name, sum(cost) as total_revenue, 
+round(percent_rank() over (order by sum(cost)), 2)*100 as percentage_of_total_revenue from treatments
+group by treatment_name;
+
+-- 15
+select patient_id, patient_name, admission_date, discharge_date from patients p1
+where p1.patient_id in (select patient_id from patients p2 where p2.patient_id = p1.patient_id and
+						p2.admission_date != p1.admission_date
+						and datediff(p1.discharge_date, p2.admission_date) <=30);
+                        
+-- 16
+select gender, diagnosis, round(avg(datediff(discharge_date, admission_date))) as avg_LOS from patients
+group by gender, diagnosis;
+
+-- Lab 5
+-- 17
+select department, semester, avg(grade) from enrollments join courses using(course_id)
+group by department, semester;
+
+-- 18
+select major, count(student_id) as no_of_students, enrollment_year from students
+group by major, enrollment_year
+order by no_of_students desc;
+
+-- 19
+select student_id, student_name, semester, sum(credits) as total_credits from students join enrollments
+using(student_id) join courses using(course_id) 
+group by student_id, student_name, semester
+having total_credits >=50;
+
+-- 20
+select course_name, enrollment_year, count(student_id) from enrollments join students using(student_id)
+join courses using(course_id)
+group by course_name, enrollment_year
+order by count(student_id) desc limit 3;
